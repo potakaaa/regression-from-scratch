@@ -13,3 +13,28 @@ Functions to implement:
   * Overlay regression line
   * Add proper labels and title
 """
+
+# visualization/plot.py
+import matplotlib.pyplot as plt
+
+def plot_regression_line(X, y, y_pred):
+    """Plot scatter of actual values and regression line (only for 1 feature)."""
+    if X.shape[1] != 1:
+        raise ValueError("plot_regression_line works only for simple linear regression (1 feature).")
+    
+    plt.scatter(X, y, color="blue", label="Actual")
+    plt.plot(X, y_pred, color="red", label="Prediction")
+    plt.xlabel("X")
+    plt.ylabel("y")
+    plt.legend()
+    plt.title("Linear Regression Fit")
+    plt.show()
+
+def plot_loss(history):
+    """Plot loss curve over epochs."""
+    plt.plot(history, label="Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Training Loss Curve")
+    plt.legend()
+    plt.show()

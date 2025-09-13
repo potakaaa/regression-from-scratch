@@ -9,3 +9,12 @@ Functions to implement:
   * Xavier/Glorot initialization for better convergence
   * Return weights array and bias scalar
 """
+
+# model/parameters.py
+import numpy as np
+
+def initialize_weights(n_features):
+    """Initialize weights and bias to zeros."""
+    weights = np.zeros(n_features)
+    bias = 0.0
+    return weights, bias

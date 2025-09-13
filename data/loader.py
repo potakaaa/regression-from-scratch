@@ -9,3 +9,13 @@ Functions to implement:
   * Basic data validation and cleaning
   * Return numpy arrays or lists for X and y
 """
+
+# data/loader.py
+import numpy as np
+
+def load_data(filepath, delimiter=","):
+    """Loads dataset from a CSV file."""
+    data = np.loadtxt(filepath, delimiter=delimiter, skiprows=1)
+    X, y = data[:, :-1], data[:, -1]
+    return X, y
+

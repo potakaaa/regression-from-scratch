@@ -9,3 +9,11 @@ Functions to implement:
   * Support for single and multiple features
   * Return predictions as numpy array or list
 """
+
+# model/predict.py
+import numpy as np
+
+def predict(X, weights, bias):
+    """Predict target values given features and parameters."""
+    return np.dot(X, weights) + bias
+
