@@ -22,6 +22,9 @@ from utils.data_split import train_test_split
 from model.parameters import initialize_weights
 from model.predict import predict
 from visualization.plot import plot_regression_line
+from model.train import train
+from metrics.loss import mse, rmse
+from metrics.evaluation import r2_score, nrmse
 
 # ----- 1. Data Preparation -----
 print("=== Data Preparation ===")
@@ -49,6 +52,24 @@ y_pred = predict(X_test, weights, bias)
 print("Predictions:", y_pred)
 print("Actual:", y_test)
 
-# ----- 4. Visualization -----
+# ----- 4. Training -----
+print("\n=== Training ===")
+weights, bias, history = train(X_train, y_train, lr=0.01, epochs=500)
+
+# ----- 5. Cost Function -----
+print("\n=== Cost Function ===")
+y_pred_train = predict(X_train, weights, bias)
+train_mse = mse(y_train, y_pred_train)
+train_rmse = rmse(y_train, y_pred_train)
+print(f"Train MSE: {train_mse:.4f}, RMSE: {train_rmse:.4f}")
+
+# ----- 6. Evaluation -----
+print("\n=== Evaluation ===")
+y_pred_test = predict(X_test, weights, bias)
+r2 = r2_score(y_test, y_pred_test)
+test_nrmse = nrmse(y_test, y_pred_test)
+print(f"R² Score: {r2:.4f}, NRMSE: {test_nrmse:.4f}")
+
+# ----- 7. Visualization -----
 print("\n=== Visualization ===")
 plot_regression_line(X, y, predict(X, weights, bias))

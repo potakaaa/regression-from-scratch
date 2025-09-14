@@ -9,3 +9,18 @@ Functions to implement:
   * Handle both single and multiple features
   * Return gradients as dictionary or tuple
 """
+import numpy as np
+
+def compute_gradients(X, y, weights, bias):
+    """
+    Compute gradients for linear regression
+    dW = -(2/n) * X.T @ (y - y_pred)
+    db = -(2/n) * sum(y - y_pred)
+    """
+    n = len(y)
+    y_pred = X @ weights + bias
+    error = y - y_pred
+    
+    dW = -(2/n) * X.T @ error
+    db = -(2/n) * np.sum(error)
+    return dW, db

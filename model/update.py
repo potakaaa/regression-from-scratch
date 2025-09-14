@@ -10,3 +10,11 @@ Functions to implement:
   * Optional momentum or other optimization techniques
   * Return updated weights and bias
 """
+
+def update_weights(weights, bias, dW, db, lr):
+    """
+    Gradient descent parameter update
+    """
+    weights -= lr * dW
+    bias -= lr * db
+    return weights, bias
