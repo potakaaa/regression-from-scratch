@@ -48,7 +48,7 @@ def run_pipeline():
     X, y = load_data(
         csv_path,
         target="Sleep Duration (hours)",
-        features=["Daily Steps", "Age", "Occupation", "Physical Activity Level (minutes/day)"],
+        features=["Daily Steps", "Age", "Occupation", "Physical Activity Level (minutes/day)"], # show single linear regression too
         delimiter=",",
         has_header=True,
     )
