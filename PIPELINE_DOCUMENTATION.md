@@ -163,7 +163,7 @@ h(x) = w₀ + w₁x₁ + w₂x₂ + ... + wₙxₙ
 Where:
 
 - **h(x)**: Predicted sleep duration
-- **w₀**: Bias term
+- **w₀**: Bias term (default when values are 0)
 - **w₁...wₙ**: Feature weights
 - **x₁...xₙ**: Feature values
 
@@ -442,9 +442,23 @@ NRMSE = RMSE / (max(y_test) - min(y_test))
 
 #### **Purpose:**
 
-Create visual representations of training progress and model performance.
+Create visual representations of training progress and model performance using matplotlib for comprehensive model analysis and debugging.
 
-#### **What Happens:**
+#### **Implementation Overview:**
+
+The visualization step uses the **`visualization/plot.py`** module which contains 5 specialized plotting functions:
+
+```python
+from visualization.plot import (
+    plot_regression_line,
+    plot_loss,
+    plot_predictions_vs_actual,
+    plot_residuals,
+    plot_residuals_vs_predicted,
+)
+```
+
+#### **Detailed Implementation:**
 
 **8.1 Loss Curve Visualization:**
 
@@ -455,13 +469,33 @@ except Exception as e:
     print("plot_loss failed:", e)
 ```
 
-**Purpose:**
+**Module Used:** `matplotlib.pyplot`
+**Function:** `plot_loss(history)`
 
-- **Training monitoring**: Shows loss convergence over epochs
-- **Convergence analysis**: Identifies if training is complete
-- **Hyperparameter tuning**: Helps select learning rate and epochs
+**Implementation Details:**
 
-**8.2 Conditional Visualization:**
+```python
+def plot_loss(history):
+    """Plot loss curve over epochs."""
+    plt.plot(history, label="Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Training Loss Curve")
+    plt.legend()
+    plt.show()
+```
+
+**What This Does:**
+
+- **Input**: `history` - List of loss values from training (500 values for 500 epochs)
+- **Creates**: Line plot showing loss decreasing over time
+- **Purpose**:
+  - **Training monitoring**: Verify loss is decreasing
+  - **Convergence analysis**: Check if training has converged
+  - **Hyperparameter tuning**: Identify optimal learning rate and epochs
+  - **Overfitting detection**: Spot if loss starts increasing
+
+**8.2 Feature-Dependent Visualization Logic:**
 
 ```python
 X_s = (X - x_mean) / x_std
@@ -475,30 +509,232 @@ else:
     plot_residuals_vs_predicted(y_test, y_pred_test)
 ```
 
-**Visualization Types:**
+**Conditional Logic Explanation:**
 
-**For Single Feature (X.shape[1] == 1):**
+- **`X.shape[1] == 1`**: Single feature regression (simple linear regression)
+- **`X.shape[1] > 1`**: Multiple features regression (multiple linear regression)
 
-- **Regression Line Plot**: Shows data points and fitted line
-- **Purpose**: Visualize linear relationship
+**8.3 Single Feature Visualization:**
 
-**For Multiple Features:**
+```python
+plot_regression_line(X, y, predict(X_s, trained_weights, trained_bias))
+```
 
-- **Predictions vs Actual**: Scatter plot with diagonal reference line
-- **Residuals Histogram**: Distribution of prediction errors
-- **Residuals vs Predicted**: Checks for homoscedasticity
+**Module Used:** `matplotlib.pyplot`
+**Function:** `plot_regression_line(X, y, y_pred)`
 
-**Error Handling:**
+**Implementation Details:**
 
-- **Try-catch blocks**: Prevents visualization failures from crashing pipeline
-- **Graceful degradation**: Pipeline continues even if plots fail
-- **Debug information**: Prints error messages for troubleshooting
+```python
+def plot_regression_line(X, y, y_pred):
+    """Plot scatter of actual values and regression line (only for 1 feature)."""
+    if X.shape[1] != 1:
+        raise ValueError("plot_regression_line works only for simple linear regression (1 feature).")
+
+    plt.scatter(X, y, color="blue", label="Actual")
+    plt.plot(X, y_pred, color="red", label="Prediction")
+    plt.xlabel("X")
+    plt.ylabel("y")
+    plt.legend()
+    plt.title("Linear Regression Fit")
+    plt.show()
+```
+
+**What This Creates:**
+
+- **Blue dots**: Actual data points (X vs y)
+- **Red line**: Predicted regression line
+- **Purpose**: Visualize how well the linear model fits the data
+
+**8.4 Multi-Feature Visualizations:**
+
+**8.4.1 Predictions vs Actual Plot:**
+
+```python
+plot_predictions_vs_actual(y_test, y_pred_test)
+```
+
+**Module Used:** `matplotlib.pyplot`
+**Function:** `plot_predictions_vs_actual(y_true, y_pred)`
+
+**Implementation Details:**
+
+```python
+def plot_predictions_vs_actual(y_true, y_pred):
+    """Scatter plot of predictions vs actual values (works for any number of features)."""
+    plt.scatter(y_true, y_pred, alpha=0.6)
+    min_val = min(y_true.min(), y_pred.min())
+    max_val = max(y_true.max(), y_pred.max())
+    plt.plot([min_val, max_val], [min_val, max_val], 'r--', label="Ideal")
+    plt.xlabel("Actual")
+    plt.ylabel("Predicted")
+    plt.title("Predicted vs Actual")
+    plt.legend()
+    plt.show()
+```
+
+**What This Creates:**
+
+- **Scatter plot**: Each point is (actual_value, predicted_value)
+- **Red dashed line**: Perfect prediction line (y = x)
+- **Purpose**:
+  - **Model accuracy**: Points close to red line = good predictions
+  - **Bias detection**: Systematic over/under-prediction
+  - **Outlier identification**: Points far from the line
+
+**8.4.2 Residuals Histogram:**
+
+```python
+plot_residuals(y_test, y_pred_test)
+```
+
+**Module Used:** `matplotlib.pyplot`
+**Function:** `plot_residuals(y_true, y_pred)`
+
+**Implementation Details:**
+
+```python
+def plot_residuals(y_true, y_pred):
+    """Histogram of residuals (y_true - y_pred)."""
+    residuals = y_true - y_pred
+    plt.hist(residuals, bins=30, alpha=0.7)
+    plt.xlabel("Residual")
+    plt.ylabel("Frequency")
+    plt.title("Residuals Histogram")
+    plt.show()
+```
+
+**What This Creates:**
+
+- **Histogram**: Distribution of prediction errors
+- **X-axis**: Residual values (actual - predicted)
+- **Y-axis**: Frequency of each residual value
+- **Purpose**:
+  - **Normality check**: Ideal residuals are normally distributed around 0
+  - **Model assumptions**: Verify linear regression assumptions
+  - **Error distribution**: Understand prediction error patterns
+
+**8.4.3 Residuals vs Predicted Plot:**
+
+```python
+plot_residuals_vs_predicted(y_test, y_pred_test)
+```
+
+**Module Used:** `matplotlib.pyplot`
+**Function:** `plot_residuals_vs_predicted(y_true, y_pred)`
+
+**Implementation Details:**
+
+```python
+def plot_residuals_vs_predicted(y_true, y_pred):
+    """Scatter of residuals vs predicted values to check homoscedasticity."""
+    residuals = y_true - y_pred
+    plt.scatter(y_pred, residuals, alpha=0.6)
+    plt.axhline(0.0, color='r', linestyle='--')
+    plt.xlabel("Predicted")
+    plt.ylabel("Residual")
+    plt.title("Residuals vs Predicted")
+    plt.show()
+```
+
+**What This Creates:**
+
+- **Scatter plot**: Residuals vs predicted values
+- **Red horizontal line**: Zero residual line
+- **Purpose**:
+  - **Homoscedasticity check**: Constant variance of residuals
+  - **Model adequacy**: Random scatter = good model
+  - **Pattern detection**: Curves or trends indicate model problems
+
+#### **Error Handling Implementation:**
+
+**Robust Error Handling:**
+
+```python
+try:
+    plot_loss(history)
+except Exception as e:
+    print("plot_loss failed:", e)
+```
+
+**Why This Matters:**
+
+- **Graceful degradation**: Pipeline continues even if visualization fails
+- **Debug information**: Error messages help identify issues
+- **Production readiness**: Prevents crashes in different environments
+- **Cross-platform compatibility**: Handles different matplotlib backends
+
+**Common Failure Scenarios:**
+
+- **Display issues**: No GUI available (headless servers)
+- **Backend problems**: Matplotlib backend not configured
+- **Memory issues**: Large datasets causing memory problems
+- **Permission issues**: Cannot create display windows
+
+#### **Data Flow in Visualization:**
+
+```
+history (from training) → plot_loss() → Loss curve plot
+y_test, y_pred_test → plot_predictions_vs_actual() → Scatter plot
+y_test, y_pred_test → plot_residuals() → Histogram
+y_test, y_pred_test → plot_residuals_vs_predicted() → Residuals plot
+X, y, predictions → plot_regression_line() → Regression line (single feature only)
+```
+
+#### **Mathematical Concepts Visualized:**
+
+**1. Loss Convergence:**
+
+- **Mathematical**: J(θ) decreasing over epochs
+- **Visual**: Downward trending line
+- **Interpretation**: Model is learning
+
+**2. Model Fit Quality:**
+
+- **Mathematical**: R² = 1 - (SS_res / SS_tot)
+- **Visual**: Points close to y=x line
+- **Interpretation**: High R² = good fit
+
+**3. Residual Analysis:**
+
+- **Mathematical**: e = y - ŷ
+- **Visual**: Normally distributed around zero
+- **Interpretation**: Good model assumptions
+
+**4. Homoscedasticity:**
+
+- **Mathematical**: Var(e) = constant
+- **Visual**: Random scatter around zero line
+- **Interpretation**: Constant error variance
 
 #### **Outputs:**
 
+**Visual Outputs:**
+
 - **Loss curve plot**: Training convergence visualization
-- **Regression plots**: Model performance visualizations
-- **Console messages**: Error handling feedback
+- **Regression line plot**: Data and fitted line (single feature)
+- **Prediction scatter plot**: Actual vs predicted values
+- **Residuals histogram**: Error distribution
+- **Residuals vs predicted plot**: Homoscedasticity check
+
+**Console Outputs:**
+
+- **Error messages**: Visualization failure notifications
+- **Debug information**: Troubleshooting details
+
+#### **Performance Considerations:**
+
+**Memory Efficiency:**
+
+- **Lazy loading**: Plots created only when needed
+- **Efficient data structures**: NumPy arrays for calculations
+- **Minimal data copying**: Direct array operations
+
+**Display Optimization:**
+
+- **Appropriate bin sizes**: 30 bins for histograms
+- **Alpha transparency**: 0.6-0.7 for scatter plots
+- **Clear labels**: Descriptive titles and axis labels
 
 ---
 
@@ -552,6 +788,176 @@ b = b - α × ∂J/∂b
 ```
 ∂J/∂w = (1/m) × Xᵀ(h(x) - y)
 ∂J/∂b = (1/m) × Σ(h(x) - y)
+```
+
+---
+
+## Multiple Linear Regression Formula Application
+
+### **Mathematical Model Overview:**
+
+The multiple linear regression model extends simple linear regression to handle multiple input features:
+
+```
+h(x) = w₀ + w₁x₁ + w₂x₂ + w₃x₃ + ... + wₙxₙ
+```
+
+**Where:**
+
+- **h(x)**: Predicted value (hypothesis)
+- **w₀**: Bias term (intercept)
+- **w₁, w₂, ..., wₙ**: Feature weights (coefficients)
+- **x₁, x₂, ..., xₙ**: Input features
+- **n**: Number of features
+
+### **Matrix Form Representation:**
+
+In matrix notation, the model becomes:
+
+```
+h(X) = Xw + b
+```
+
+**Where:**
+
+- **X**: Feature matrix (m × n) - m samples, n features
+- **w**: Weight vector (n × 1)
+- **b**: Bias scalar
+- **h(X)**: Prediction vector (m × 1)
+
+### **Real-World Application in Our Sleep Health Pipeline:**
+
+Based on our sleep health dataset, the model becomes:
+
+```
+Sleep_Duration = w₀ + w₁×Daily_Steps + w₂×Age + w₃×Occupation_Engineer + w₄×Occupation_Teacher + w₅×Occupation_Doctor + w₆×Physical_Activity
+```
+
+**Feature Breakdown:**
+
+- **w₀**: Base sleep duration (intercept)
+- **w₁**: Effect of daily steps on sleep
+- **w₂**: Effect of age on sleep
+- **w₃, w₄, w₅**: Effects of different occupations (one-hot encoded)
+- **w₆**: Effect of physical activity on sleep
+
+### **Mathematical Example with Our Data:**
+
+**Sample Data:**
+
+```
+Person 1: [8000 steps, 25 age, Engineer, 30 min activity] → 7.5 hours sleep
+Person 2: [12000 steps, 30 age, Teacher, 45 min activity] → 8.0 hours sleep
+```
+
+**Feature Matrix (after one-hot encoding):**
+
+```
+X = [[8000, 25, 1, 0, 0, 30],    # Engineer
+     [12000, 30, 0, 1, 0, 45]]   # Teacher
+```
+
+**Target Vector:**
+
+```
+y = [7.5, 8.0]
+```
+
+**Prediction Calculation:**
+
+```
+h(x⁽¹⁾) = w₀ + w₁×8000 + w₂×25 + w₃×1 + w₄×0 + w₅×0 + w₆×30
+h(x⁽²⁾) = w₀ + w₁×12000 + w₂×30 + w₃×0 + w₄×1 + w₅×0 + w₆×45
+```
+
+**Cost Calculation:**
+
+```
+J = (1/4) × [(h(x⁽¹⁾) - 7.5)² + (h(x⁽²⁾) - 8.0)²]
+```
+
+**Gradient Calculation:**
+
+```
+∂J/∂w₁ = (1/2) × [(h(x⁽¹⁾) - 7.5)×8000 + (h(x⁽²⁾) - 8.0)×12000]
+∂J/∂w₂ = (1/2) × [(h(x⁽¹⁾) - 7.5)×25 + (h(x⁽²⁾) - 8.0)×30]
+...
+```
+
+### **Feature Scaling Impact:**
+
+**Before Standardization:**
+
+```
+X = [[8000, 25, 1, 0, 0, 30],
+     [12000, 30, 0, 1, 0, 45]]
+```
+
+**After Standardization:**
+
+```
+X_std = [[0.0, -0.5, 1.0, 0.0, 0.0, -0.3],
+         [1.0, 0.5, 0.0, 1.0, 0.0, 0.3]]
+```
+
+**Why This Matters:**
+
+- **Equal feature importance**: All features contribute equally to gradient updates
+- **Faster convergence**: Gradient descent converges more quickly
+- **Numerical stability**: Prevents overflow/underflow issues
+
+### **Model Interpretation:**
+
+**Trained Model Example:**
+
+```
+Sleep_Duration = 7.2 + 0.0001×Daily_Steps + 0.05×Age + 0.3×Engineer + 0.1×Teacher + 0.2×Doctor + 0.02×Physical_Activity
+```
+
+**Interpretation:**
+
+- **Base sleep**: 7.2 hours (intercept)
+- **Daily steps**: +0.0001 hours per step (minimal effect)
+- **Age**: +0.05 hours per year of age
+- **Occupation effects**: Engineers sleep 0.3 hours more, Teachers 0.1 hours more, Doctors 0.2 hours more
+- **Physical activity**: +0.02 hours per minute of activity
+
+### **Complete Gradient Descent Algorithm:**
+
+```
+1. Initialize w = [0, 0, ..., 0], b = 0
+2. For each epoch:
+   a. Compute predictions: h(X) = Xw + b
+   b. Compute cost: J = (1/2m) × ||h(X) - y||²
+   c. Compute gradients:
+      - ∂J/∂w = (1/m) × Xᵀ(h(X) - y)
+      - ∂J/∂b = (1/m) × Σ(h(X) - y)
+   d. Update parameters:
+      - w = w - α × ∂J/∂w
+      - b = b - α × ∂J/∂b
+3. Return optimized w and b
+```
+
+### **Evaluation Metrics:**
+
+**R² Score:**
+
+```
+R² = 1 - (SS_res / SS_tot)
+SS_res = Σ(y - ŷ)²
+SS_tot = Σ(y - ȳ)²
+```
+
+**Root Mean Squared Error:**
+
+```
+RMSE = √[(1/m) × Σ(y - ŷ)²]
+```
+
+**Normalized RMSE:**
+
+```
+NRMSE = RMSE / (y_max - y_min)
 ```
 
 ---
